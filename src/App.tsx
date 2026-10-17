@@ -1,25 +1,28 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import {
-  DAYS_IN_YEAR,
+  DEFAULT_TARGET,
+  DEFAULT_UNIT,
   addDays,
   countInYear,
   dayKey,
   dayOfYear,
+  daysInYear,
   loadState,
   saveState,
   startOfToday,
   streak,
+  type Habit,
   type TrackerState,
 } from './habits';
 
 const DAY_LETTERS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-const DEFAULT_TARGET = 300;
-const DEFAULT_UNIT = 'days';
 
 export function App() {
   const today = startOfToday();
+  const year = today.getFullYear();
   const [state, setState] = useState<TrackerState>(() => loadState(today));
   const [newName, setNewName] = useState('');
+  const [editingId, setEditingId] = useState<number | null>(null);
 
   useEffect(() => saveState(state), [state]);
 
@@ -46,6 +49,20 @@ export function App() {
     setNewName('');
   };
 
+  const saveHabit = (updated: Habit) => {
+    setState((s) => ({ ...s, habits: s.habits.map((h) => (h.id === updated.id ? updated : h)) }));
+    setEditingId(null);
+  };
+
+  const deleteHabit = (id: number) => {
+    setState((s) => {
+      const { [id]: _, ...rest } = s.done;
+      return { habits: s.habits.filter((h) => h.id !== id), done: rest };
+    });
+    setEditingId(null);
+  };
+
+  const yearDays = daysInYear(year);
   const doy = dayOfYear(today);
   const doneToday = habits.filter((h) => done[h.id]?.[todayKey]).length;
   const bestStreak = Math.max(0, ...habits.map((h) => streak(done, h.id, today)));
@@ -59,17 +76,17 @@ export function App() {
         <header className="header">
           <div>
             <div className="eyebrow">{dateLabel}</div>
-            <h1 className="title">Habits 2026</h1>
+            <h1 className="title">Habits {year}</h1>
           </div>
           <div className="year">
             <div className="year-label">
               <span>Year progress</span>
               <span>
-                Day {doy} of {DAYS_IN_YEAR}
+                Day {doy} of {yearDays}
               </span>
             </div>
             <div className="year-track">
-              <div className="year-fill" style={{ width: `${((doy / DAYS_IN_YEAR) * 100).toFixed(1)}%` }} />
+              <div className="year-fill" style={{ width: `${((doy / yearDays) * 100).toFixed(1)}%` }} />
             </div>
           </div>
         </header>
@@ -86,7 +103,7 @@ export function App() {
             <div className="stat-label">Best current streak</div>
             <div className="stat-value">
               {bestStreak}
-              <span className="stat-suffix"> days</span>
+              <span className="stat-suffix"> {bestStreak === 1 ? 'day' : 'days'}</span>
             </div>
           </div>
           <div className="stat">
@@ -112,33 +129,53 @@ export function App() {
               </div>
             </div>
 
-            {habits.map((h) => (
-              <div key={h.id} className="habit-row">
-                <div className="habit-info">
-                  <div className="habit-name">{h.name}</div>
-                  <div className="habit-streak">{streak(done, h.id, today)}-day streak</div>
-                </div>
-                <div className="cells">
-                  {week.map((d) => {
-                    const k = dayKey(d);
-                    const on = !!done[h.id]?.[k];
-                    const label = d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
-                    return (
-                      <button
-                        key={k}
-                        type="button"
-                        className={`cell${on ? ' is-on' : ''}${k === todayKey ? ' is-today' : ''}`}
-                        aria-pressed={on}
-                        aria-label={`${h.name}, ${label}`}
-                        onClick={() => toggle(h.id, k)}
-                      >
-                        {on ? '✓' : ''}
+            {habits.length === 0 && (
+              <div className="empty">No habits yet. Add your first one below, then tap a day to tick it off.</div>
+            )}
+
+            {habits.map((h) =>
+              editingId === h.id ? (
+                <HabitEditor
+                  key={h.id}
+                  habit={h}
+                  onSave={saveHabit}
+                  onCancel={() => setEditingId(null)}
+                  onDelete={() => deleteHabit(h.id)}
+                />
+              ) : (
+                <div key={h.id} className="habit-row">
+                  <div className="habit-info">
+                    <div className="habit-name">{h.name}</div>
+                    <div className="habit-streak">
+                      {streak(done, h.id, today)}-day streak
+                      <span aria-hidden="true"> · </span>
+                      <button type="button" className="link-button" onClick={() => setEditingId(h.id)}>
+                        Edit
                       </button>
-                    );
-                  })}
+                    </div>
+                  </div>
+                  <div className="cells">
+                    {week.map((d) => {
+                      const k = dayKey(d);
+                      const on = !!done[h.id]?.[k];
+                      const label = d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+                      return (
+                        <button
+                          key={k}
+                          type="button"
+                          className={`cell${on ? ' is-on' : ''}${k === todayKey ? ' is-today' : ''}`}
+                          aria-pressed={on}
+                          aria-label={`${h.name}, ${label}`}
+                          onClick={() => toggle(h.id, k)}
+                        >
+                          {on ? '✓' : ''}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ),
+            )}
 
             <form className="add" onSubmit={addHabit}>
               <input
@@ -155,17 +192,18 @@ export function App() {
           </section>
 
           <section className="card goals">
-            <h2 className="card-title">2026 goals</h2>
+            <h2 className="card-title">{year} goals</h2>
+            {habits.length === 0 && <div className="empty">Each habit gets a yearly goal here. Tap Edit on a habit to set it.</div>}
             {habits.map((h) => {
               const target = h.target ?? DEFAULT_TARGET;
-              const count = countInYear(done, h.id);
+              const count = countInYear(done, h.id, year);
               const pct = Math.min(100, (count / target) * 100).toFixed(1);
               return (
                 <div key={h.id}>
                   <div className="goal-head">
-                    <span className="goal-name">{h.goal ?? h.name}</span>
+                    <span className="goal-name">{h.goal || h.name}</span>
                     <span className="goal-count">
-                      {count} / {target} {h.unit ?? DEFAULT_UNIT}
+                      {count} / {target} {h.unit || DEFAULT_UNIT}
                     </span>
                   </div>
                   <div className="goal-track">
@@ -179,5 +217,78 @@ export function App() {
         </div>
       </div>
     </div>
+  );
+}
+
+interface HabitEditorProps {
+  habit: Habit;
+  onSave: (habit: Habit) => void;
+  onCancel: () => void;
+  onDelete: () => void;
+}
+
+function HabitEditor({ habit, onSave, onCancel, onDelete }: HabitEditorProps) {
+  const [name, setName] = useState(habit.name);
+  const [goal, setGoal] = useState(habit.goal ?? '');
+  const [target, setTarget] = useState(String(habit.target ?? DEFAULT_TARGET));
+  const [unit, setUnit] = useState(habit.unit ?? DEFAULT_UNIT);
+
+  const submit = (e: FormEvent) => {
+    e.preventDefault();
+    const n = name.trim();
+    if (!n) return;
+    const t = Math.max(1, Math.round(Number(target)) || DEFAULT_TARGET);
+    onSave({ ...habit, name: n, goal: goal.trim() || undefined, target: t, unit: unit.trim() || DEFAULT_UNIT });
+  };
+
+  const remove = () => {
+    if (window.confirm(`Delete "${habit.name}" and all its ticked days?`)) onDelete();
+  };
+
+  return (
+    <form className="editor" onSubmit={submit}>
+      <label className="field">
+        <span className="field-label">Habit</span>
+        <input className="field-input" value={name} onChange={(e) => setName(e.target.value)} autoFocus />
+      </label>
+      <label className="field">
+        <span className="field-label">Yearly goal</span>
+        <input
+          className="field-input"
+          value={goal}
+          onChange={(e) => setGoal(e.target.value)}
+          placeholder={`e.g. ${name || 'Read 24 books'}`}
+        />
+      </label>
+      <div className="field-row">
+        <label className="field">
+          <span className="field-label">Target</span>
+          <input
+            className="field-input"
+            type="number"
+            min={1}
+            inputMode="numeric"
+            value={target}
+            onChange={(e) => setTarget(e.target.value)}
+          />
+        </label>
+        <label className="field">
+          <span className="field-label">Unit</span>
+          <input className="field-input" value={unit} onChange={(e) => setUnit(e.target.value)} placeholder="days" />
+        </label>
+      </div>
+      <div className="editor-actions">
+        <button type="button" className="delete-button" onClick={remove}>
+          Delete
+        </button>
+        <span className="spacer" />
+        <button type="button" className="ghost-button" onClick={onCancel}>
+          Cancel
+        </button>
+        <button type="submit" className="add-button">
+          Save
+        </button>
+      </div>
+    </form>
   );
 }

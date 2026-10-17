@@ -321,3 +321,151 @@ a:hover {
   font-size: 13px;
   color: var(--ink-muted);
 }
+
+/* Empty states */
+
+.empty {
+  padding: 12px 0;
+  border-top: 1px solid var(--line-soft);
+  font-size: 14px;
+  color: var(--ink-muted);
+}
+
+.goals .empty {
+  padding: 0;
+  border-top: none;
+}
+
+/* Habit editor */
+
+.link-button {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: var(--violet-700);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.link-button:hover {
+  color: #3b0f80;
+}
+
+.editor {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  margin: 4px 0;
+  border-radius: 16px;
+  background: var(--input-bg);
+  border: 1px solid var(--line);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+.field-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+
+.field-input {
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid var(--input-border);
+  padding: 0 12px;
+  font: inherit;
+  background: #fff;
+  min-width: 0;
+}
+
+.field-row {
+  display: flex;
+  gap: 12px;
+}
+
+.editor-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.ghost-button,
+.delete-button {
+  height: 44px;
+  padding: 0 16px;
+  border-radius: 12px;
+  font: 700 15px var(--body);
+  cursor: pointer;
+  background: #fff;
+}
+
+.ghost-button {
+  border: 1px solid var(--input-border);
+  color: var(--ink-soft);
+}
+
+.delete-button {
+  border: 1px solid #f3c4c4;
+  color: #b42318;
+}
+
+/* Phones: let the week grid drop below the habit name instead of squeezing it. */
+
+@media (max-width: 520px) {
+  .page {
+    padding: 24px 16px;
+  }
+
+  .card {
+    padding: 20px 16px;
+  }
+
+  .week-head,
+  .habit-row {
+    flex-wrap: wrap;
+  }
+
+  .week-head .cells,
+  .habit-row .cells {
+    margin-left: auto;
+  }
+
+  .habit-info {
+    flex: 1 1 100%;
+  }
+
+  .stats {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  .stat {
+    padding: 14px 12px;
+    border-radius: 16px;
+  }
+
+  .stat-label {
+    font-size: 12px;
+  }
+
+  .stat-value {
+    font-size: 28px;
+  }
+
+  .stat-suffix {
+    font-size: 16px;
+  }
+}

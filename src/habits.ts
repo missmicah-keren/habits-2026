@@ -1,6 +1,7 @@
-export const YEAR = 2026;
-const DAYS_IN_YEAR = 365;
 const STORAGE_KEY = 'habits-2026';
+
+export const DEFAULT_TARGET = 300;
+export const DEFAULT_UNIT = 'days';
 
 export interface Habit {
   id: number;
@@ -53,24 +54,24 @@ export function streak(done: DoneMap, id: number, today: Date): number {
   return n;
 }
 
-export function countInYear(done: DoneMap, id: number): number {
-  const prefix = `${YEAR}-`;
+export function countInYear(done: DoneMap, id: number, year: number): number {
+  const prefix = `${year}-`;
   return Object.keys(done[id] ?? {}).filter((k) => k.startsWith(prefix)).length;
 }
 
-/** 1-based day of YEAR for `today`, clamped to the year. */
-export function dayOfYear(today: Date): number {
-  const doy = Math.round((today.getTime() - new Date(YEAR, 0, 0).getTime()) / 864e5);
-  return Math.min(DAYS_IN_YEAR, Math.max(0, doy));
+export function daysInYear(year: number): number {
+  return Math.round((new Date(year + 1, 0, 1).getTime() - new Date(year, 0, 1).getTime()) / 864e5);
 }
 
-export { DAYS_IN_YEAR };
+/** 1-based day of today's year. */
+export function dayOfYear(today: Date): number {
+  return Math.round((today.getTime() - new Date(today.getFullYear(), 0, 0).getTime()) / 864e5);
+}
 
-function sampleState(withHistory: boolean, today: Date): TrackerState {
+function demoState(today: Date): TrackerState {
   const done: DoneMap = {};
   for (const h of SAMPLE_HABITS) {
     done[h.id] = {};
-    if (!withHistory) continue;
     // Deterministic pseudo-random history, same generator as the design prototype.
     for (let i = 1; i <= 290; i++) {
       const x = Math.sin(i * h.id * 12.9898) * 43758.5453;
@@ -86,7 +87,7 @@ export function isDemo(): boolean {
 }
 
 export function loadState(today: Date): TrackerState {
-  if (isDemo()) return sampleState(true, today);
+  if (isDemo()) return demoState(today);
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
@@ -96,7 +97,7 @@ export function loadState(today: Date): TrackerState {
   } catch {
     // Unreadable or blocked storage: fall through to a fresh start.
   }
-  return sampleState(false, today);
+  return { habits: [], done: {} };
 }
 
 export function saveState(state: TrackerState): void {
