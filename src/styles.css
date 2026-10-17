@@ -1,3 +1,8 @@
+/*
+ * Theme. Change these to re-colour the whole app.
+ * --violet-* is the accent scale (950 darkest); swap all five for another hue.
+ * If you change the fonts, update the Google Fonts link in index.html too.
+ */
 :root {
   --bg: #f4f0fb;
   --ink: #1e1233;

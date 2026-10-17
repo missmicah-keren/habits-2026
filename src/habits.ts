@@ -1,7 +1,4 @@
-const STORAGE_KEY = 'habits-2026';
-
-export const DEFAULT_TARGET = 300;
-export const DEFAULT_UNIT = 'days';
+import { STORAGE_KEY } from './config';
 
 export interface Habit {
   id: number;

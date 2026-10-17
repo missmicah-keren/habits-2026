@@ -1,7 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
+import { APP_NAME, DEFAULT_TARGET, DEFAULT_UNIT } from './config';
 import {
-  DEFAULT_TARGET,
-  DEFAULT_UNIT,
   addDays,
   countInYear,
   dayKey,
@@ -25,6 +24,9 @@ export function App() {
   const [editingId, setEditingId] = useState<number | null>(null);
 
   useEffect(() => saveState(state), [state]);
+  useEffect(() => {
+    document.title = `${APP_NAME} ${year}`;
+  }, [year]);
 
   const { habits, done } = state;
   const todayKey = dayKey(today);
@@ -76,7 +78,9 @@ export function App() {
         <header className="header">
           <div>
             <div className="eyebrow">{dateLabel}</div>
-            <h1 className="title">Habits {year}</h1>
+            <h1 className="title">
+              {APP_NAME} {year}
+            </h1>
           </div>
           <div className="year">
             <div className="year-label">
